@@ -1,5 +1,7 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+} // Exit if accessed directly
 
 /**
  * Woo Conditions Class
@@ -53,9 +55,9 @@ class Woo_Conditions {
 	 * @access public
 	 * @return void
 	 */
-	public function __construct () {
+	public function __construct() {
 		$this->meta_box_settings['title'] = __( 'Conditions', 'woosidebars' );
-		$this->upper_limit = intval( apply_filters( 'woosidebars_upper_limit', 200 ) );
+		$this->upper_limit                = intval( apply_filters( 'woosidebars_upper_limit', 200 ) );
 
 		if ( is_admin() && get_post_type() == $this->token || ! get_post_type() ) {
 			add_action( 'admin_menu', array( $this, 'meta_box_setup' ), 20 );
@@ -81,7 +83,7 @@ class Woo_Conditions {
 	 * @access public
 	 * @return void
 	 */
-	public function get_conditions () {
+	public function get_conditions() {
 		$this->determine_conditions();
 
 		$this->conditions = apply_filters( 'woo_conditions', $this->conditions );
@@ -95,7 +97,7 @@ class Woo_Conditions {
 	 * @access public
 	 * @return void
 	 */
-	public function determine_conditions () {
+	public function determine_conditions() {
 		$this->is_hierarchy();
 		$this->is_taxonomy();
 		$this->is_post_type_archive();
@@ -109,8 +111,8 @@ class Woo_Conditions {
 	 * @access public
 	 * @return void
 	 */
-	public function setup_default_conditions_reference () {
-		$conditions = array();
+	public function setup_default_conditions_reference() {
+		$conditions          = array();
 		$conditions_headings = array();
 
 		// Get an array of the different post status labels, in case we need it later.
@@ -120,7 +122,7 @@ class Woo_Conditions {
 		$conditions['pages'] = array();
 
 		$statuses_string = join( ',', array_keys( $post_statuses ) );
-		$pages = get_pages( array( 'post_status' => $statuses_string ) );
+		$pages           = get_pages( array( 'post_status' => $statuses_string ) );
 
 		if ( count( $pages ) > 0 ) {
 
@@ -130,23 +132,23 @@ class Woo_Conditions {
 				$token = 'post-' . $v->ID;
 				$label = esc_html( $v->post_title );
 				if ( 'publish' != $v->post_status ) {
-					$label .= ' (' . $post_statuses[$v->post_status] . ')';
+					$label .= ' (' . $post_statuses[ $v->post_status ] . ')';
 				}
 
-				$conditions['pages'][$token] = array(
-									'label' => $label,
-									'description' => sprintf( __( 'The "%s" page', 'woosidebars' ), $v->post_title )
-									);
+				$conditions['pages'][ $token ] = array(
+					'label'       => $label,
+					'description' => sprintf( __( 'The "%s" page', 'woosidebars' ), $v->post_title )
+				);
 			}
 
 		}
 
 		$args = array(
-					'show_ui' => true,
-					'public' => true,
-					'publicly_queryable' => true,
-					'_builtin' => false
-					);
+			'show_ui'            => true,
+			'public'             => true,
+			'publicly_queryable' => true,
+			'_builtin'           => false
+		);
 
 		$post_types = get_post_types( $args, 'object' );
 
@@ -159,34 +161,44 @@ class Woo_Conditions {
 		if ( count( $post_types ) ) {
 			foreach ( $post_types as $k => $v ) {
 				if ( in_array( $k, $disallowed_types ) ) {
-					unset( $post_types[$k] );
+					unset( $post_types[ $k ] );
 				}
 			}
 		}
 
 		// Add per-post support for any post type that supports it.
 		$args = array(
-				'show_ui' => true,
-				'public' => true,
-				'publicly_queryable' => true,
-				'_builtin' => true
-				);
+			'show_ui'            => true,
+			'public'             => true,
+			'publicly_queryable' => true,
+			'_builtin'           => true
+		);
 
 		$built_in_post_types = get_post_types( $args, 'object' );
 
 		foreach ( $built_in_post_types as $k => $v ) {
 			if ( $k == 'post' ) {
-				$post_types[$k] = $v;
+				$post_types[ $k ] = $v;
 				break;
 			}
 		}
 
 		foreach ( $post_types as $k => $v ) {
-			if ( ! post_type_supports( $k, 'woosidebars' ) ) { continue; }
+			if ( ! post_type_supports( $k, 'woosidebars' ) ) {
+				continue;
+			}
 
-			$conditions_headings[$k] = $v->labels->name;
+			$conditions_headings[ $k ] = $v->labels->name;
 
-			$query_args = array( 'numberposts' => intval( $this->upper_limit ), 'post_type' => $k, 'meta_key' => '_enable_sidebar', 'meta_value' => 'yes', 'meta_compare' => '=', 'post_status' => 'any', 'suppress_filters' => 'false' );
+			$query_args = array(
+				'numberposts'      => intval( $this->upper_limit ),
+				'post_type'        => $k,
+				'meta_key'         => '_enable_sidebar',
+				'meta_value'       => 'yes',
+				'meta_compare'     => '=',
+				'post_status'      => 'any',
+				'suppress_filters' => 'false'
+			);
 
 			$posts = get_posts( $query_args );
 
@@ -194,12 +206,12 @@ class Woo_Conditions {
 				foreach ( $posts as $i => $j ) {
 					$label = $j->post_title;
 					if ( 'publish' != $j->post_status ) {
-						$label .= ' <strong>(' . $post_statuses[$j->post_status] . ')</strong>';
+						$label .= ' <strong>(' . $post_statuses[ $j->post_status ] . ')</strong>';
 					}
-					$conditions[$k]['post' . '-' . $j->ID] = array(
-										'label' => $label,
-										'description' => sprintf( __( 'A custom sidebar for "%s"', 'woosidebars' ), esc_attr( $j->post_title ) )
-										);
+					$conditions[ $k ][ 'post' . '-' . $j->ID ] = array(
+						'label'       => $label,
+						'description' => sprintf( __( 'A custom sidebar for "%s"', 'woosidebars' ), esc_attr( $j->post_title ) )
+					);
 				}
 			}
 		}
@@ -214,11 +226,11 @@ class Woo_Conditions {
 			$conditions_headings['templates'] = __( 'Page Templates', 'woosidebars' );
 
 			foreach ( $page_templates as $k => $v ) {
-				$token = str_replace( '.php', '', 'page-template-' . $v );
-				$conditions['templates'][$token] = array(
-									'label' => $k,
-									'description' => sprintf( __( 'The "%s" page template', 'woosidebars' ), $k )
-									);
+				$token                             = str_replace( '.php', '', 'page-template-' . $v );
+				$conditions['templates'][ $token ] = array(
+					'label'       => $k,
+					'description' => sprintf( __( 'The "%s" page template', 'woosidebars' ), $k )
+				);
 			}
 		}
 
@@ -233,19 +245,19 @@ class Woo_Conditions {
 				$token = 'post-type-archive-' . $k;
 
 				if ( $v->has_archive ) {
-					$conditions['post_types'][$token] = array(
-										'label' => sprintf( __( '"%s" Post Type Archive', 'woosidebars' ), $v->labels->name ),
-										'description' => sprintf( __( 'The "%s" post type archive', 'woosidebars' ), $v->labels->name )
-										);
+					$conditions['post_types'][ $token ] = array(
+						'label'       => sprintf( __( '"%s" Post Type Archive', 'woosidebars' ), $v->labels->name ),
+						'description' => sprintf( __( 'The "%s" post type archive', 'woosidebars' ), $v->labels->name )
+					);
 				}
 			}
 
 			foreach ( $post_types as $k => $v ) {
-				$token = 'post-type-' . $k;
-				$conditions['post_types'][$token] = array(
-									'label' => sprintf( __( 'Each Individual %s', 'woosidebars' ), $v->labels->singular_name ),
-									'description' => sprintf( __( 'Entries in the "%s" post type', 'woosidebars' ), $v->labels->name )
-									);
+				$token                              = 'post-type-' . $k;
+				$conditions['post_types'][ $token ] = array(
+					'label'       => sprintf( __( 'Each Individual %s', 'woosidebars' ), $v->labels->singular_name ),
+					'description' => sprintf( __( 'Entries in the "%s" post type', 'woosidebars' ), $v->labels->name )
+				);
 			}
 
 		}
@@ -254,8 +266,8 @@ class Woo_Conditions {
 		$conditions['taxonomies'] = array();
 
 		$args = array(
-					'public' => true
-					);
+			'public' => true
+		);
 
 		$taxonomies = get_taxonomies( $args, 'objects' );
 
@@ -267,23 +279,32 @@ class Woo_Conditions {
 				$taxonomy = $v;
 
 				if ( $taxonomy->public == true ) {
-					$conditions['taxonomies']['archive-' . $k] = array(
-										'label' => esc_html( $taxonomy->labels->name ) . ' (' . esc_html( $k ) . ')',
-										'description' => sprintf( __( 'The default "%s" archives', 'woosidebars' ), strtolower( $taxonomy->labels->name ) )
-										);
+					$conditions['taxonomies'][ 'archive-' . $k ] = array(
+						'label'       => esc_html( $taxonomy->labels->name ) . ' (' . esc_html( $k ) . ')',
+						'description' => sprintf( __( 'The default "%s" archives', 'woosidebars' ), strtolower( $taxonomy->labels->name ) )
+					);
 
 					// Setup each individual taxonomy's terms as well.
-					$conditions_headings['taxonomy-' . $k] = $taxonomy->labels->name;
-					$terms = get_terms( $k );
+					$conditions_headings[ 'taxonomy-' . $k ] = $taxonomy->labels->name;
+					$terms                                   = get_terms( $k );
 					if ( count( $terms ) > 0 ) {
-						$conditions['taxonomy-' . $k] = array();
+						$conditions[ 'taxonomy-' . $k ] = array();
 						foreach ( $terms as $i => $j ) {
-							$conditions['taxonomy-' . $k]['term-' . $j->term_id] = array( 'label' => esc_html( $j->name ), 'description' => sprintf( __( 'The %s %s archive', 'woosidebars' ), esc_html( $j->name ), strtolower( $taxonomy->labels->name ) ) );
+							$conditions[ 'taxonomy-' . $k ][ 'term-' . $j->term_id ] = array(
+								'label'       => esc_html( $j->name ),
+								'description' => sprintf( __( 'The %s %s archive', 'woosidebars' ), esc_html( $j->name ), strtolower( $taxonomy->labels->name ) )
+							);
 							if ( $k == 'category' ) {
-								$conditions['taxonomy-' . $k]['in-term-' . $j->term_id] = array( 'label' => sprintf( __( 'All posts in "%s"', 'woosidebars' ), esc_html( $j->name ) ), 'description' => sprintf( __( 'All posts in the %s %s archive', 'woosidebars' ), esc_html( $j->name ), strtolower( $taxonomy->labels->name ) ) );
+								$conditions[ 'taxonomy-' . $k ][ 'in-term-' . $j->term_id ] = array(
+									'label'       => sprintf( __( 'All posts in "%s"', 'woosidebars' ), esc_html( $j->name ) ),
+									'description' => sprintf( __( 'All posts in the %s %s archive', 'woosidebars' ), esc_html( $j->name ), strtolower( $taxonomy->labels->name ) )
+								);
 							}
 							if ( $k == 'post_tag' ) {
-								$conditions['taxonomy-' . $k]['has-term-' . $j->term_id] = array( 'label' => sprintf( __( 'All posts tagged "%s"', 'woosidebars' ), esc_html( $j->name ) ), 'description' => sprintf( __( 'All posts tagged %s', 'woosidebars' ), esc_html( $j->name ) ) );
+								$conditions[ 'taxonomy-' . $k ][ 'has-term-' . $j->term_id ] = array(
+									'label'       => sprintf( __( 'All posts tagged "%s"', 'woosidebars' ), esc_html( $j->name ) ),
+									'description' => sprintf( __( 'All posts tagged %s', 'woosidebars' ), esc_html( $j->name ) )
+								);
 							}
 						}
 					}
@@ -296,52 +317,52 @@ class Woo_Conditions {
 
 		// Template Hierarchy
 		$conditions['hierarchy']['page'] = array(
-									'label' => __( 'Pages', 'woosidebars' ),
-									'description' => __( 'Displayed on all pages that don\'t have a more specific widget area.', 'woosidebars' )
-									);
+			'label'       => __( 'Pages', 'woosidebars' ),
+			'description' => __( 'Displayed on all pages that don\'t have a more specific widget area.', 'woosidebars' )
+		);
 
 		$conditions['hierarchy']['search'] = array(
-									'label' => __( 'Search Results', 'woosidebars' ),
-									'description' => __( 'Displayed on search results screens.', 'woosidebars' )
-									);
+			'label'       => __( 'Search Results', 'woosidebars' ),
+			'description' => __( 'Displayed on search results screens.', 'woosidebars' )
+		);
 
 		$conditions['hierarchy']['home'] = array(
-									'label' => __( 'Default "Your Latest Posts" Screen', 'woosidebars' ),
-									'description' => __( 'Displayed on the default "Your Latest Posts" screen.', 'woosidebars' )
-									);
+			'label'       => __( 'Default "Your Latest Posts" Screen', 'woosidebars' ),
+			'description' => __( 'Displayed on the default "Your Latest Posts" screen.', 'woosidebars' )
+		);
 
 		$conditions['hierarchy']['front_page'] = array(
-									'label' => __( 'Front Page', 'woosidebars' ),
-									'description' => __( 'Displayed on any front page, regardless of the settings under the "Settings -> Reading" admin screen.', 'woosidebars' )
-									);
+			'label'       => __( 'Front Page', 'woosidebars' ),
+			'description' => __( 'Displayed on any front page, regardless of the settings under the "Settings -> Reading" admin screen.', 'woosidebars' )
+		);
 
 		$conditions['hierarchy']['single'] = array(
-									'label' => __( 'Single Entries', 'woosidebars' ),
-									'description' => __( 'Displayed on single entries of any public post type other than "Pages".', 'woosidebars' )
-									);
+			'label'       => __( 'Single Entries', 'woosidebars' ),
+			'description' => __( 'Displayed on single entries of any public post type other than "Pages".', 'woosidebars' )
+		);
 
 		$conditions['hierarchy']['archive'] = array(
-									'label' => __( 'All Archives', 'woosidebars' ),
-									'description' => __( 'Displayed on all archives (category, tag, taxonomy, post type, dated, author and search).', 'woosidebars' )
-									);
+			'label'       => __( 'All Archives', 'woosidebars' ),
+			'description' => __( 'Displayed on all archives (category, tag, taxonomy, post type, dated, author and search).', 'woosidebars' )
+		);
 
 		$conditions['hierarchy']['author'] = array(
-									'label' => __( 'Author Archives', 'woosidebars' ),
-									'description' => __( 'Displayed on all author archive screens (that don\'t have a more specific sidebar).', 'woosidebars' )
-									);
+			'label'       => __( 'Author Archives', 'woosidebars' ),
+			'description' => __( 'Displayed on all author archive screens (that don\'t have a more specific sidebar).', 'woosidebars' )
+		);
 
 		$conditions['hierarchy']['date'] = array(
-									'label' => __( 'Date Archives', 'woosidebars' ),
-									'description' => __( 'Displayed on all date archives.', 'woosidebars' )
-									);
+			'label'       => __( 'Date Archives', 'woosidebars' ),
+			'description' => __( 'Displayed on all date archives.', 'woosidebars' )
+		);
 
 		$conditions['hierarchy']['404'] = array(
-									'label' => __( '404 Error Screens', 'woosidebars' ),
-									'description' => __( 'Displayed on all 404 error screens.', 'woosidebars' )
-									);
+			'label'       => __( '404 Error Screens', 'woosidebars' ),
+			'description' => __( 'Displayed on all 404 error screens.', 'woosidebars' )
+		);
 
-		$this->conditions_reference = (array)apply_filters( 'woo_conditions_reference', $conditions );
-		$this->conditions_headings = (array)apply_filters( 'woo_conditions_headings', $conditions_headings );
+		$this->conditions_reference = (array) apply_filters( 'woo_conditions_reference', $conditions );
+		$this->conditions_headings  = (array) apply_filters( 'woo_conditions_headings', $conditions_headings );
 	} // End setup_default_conditions_reference()
 
 	/**
@@ -351,7 +372,7 @@ class Woo_Conditions {
 	 * @access public
 	 * @return void
 	 */
-	function is_hierarchy () {
+	function is_hierarchy() {
 		if ( is_front_page() && ! is_home() ) {
 			$this->conditions[] = 'static_front_page';
 		}
@@ -438,7 +459,7 @@ class Woo_Conditions {
 	 * @access public
 	 * @return void
 	 */
-	public function is_taxonomy () {
+	public function is_taxonomy() {
 		if ( ( is_tax() || is_archive() ) && ! is_post_type_archive() ) {
 			$obj = get_queried_object();
 
@@ -460,11 +481,11 @@ class Woo_Conditions {
 	 * @access public
 	 * @return void
 	 */
-	public function is_post_type_archive () {
+	public function is_post_type_archive() {
 		if ( is_post_type_archive() ) {
 
 			$post_type = get_query_var( 'post_type' );
-			if ( is_array( $post_type ) ){
+			if ( is_array( $post_type ) ) {
 				$post_type = reset( $post_type );
 			}
 
@@ -479,7 +500,7 @@ class Woo_Conditions {
 	 * @access public
 	 * @return void
 	 */
-	public function is_page_template () {
+	public function is_page_template() {
 		if ( is_singular() ) {
 			global $post;
 			$template = get_post_meta( $post->ID, '_wp_page_template', true );
@@ -496,8 +517,11 @@ class Woo_Conditions {
 	 * @access public
 	 * @return void
 	 */
-	public function meta_box_setup () {
-		add_meta_box( 'woosidebars-conditions', esc_html( $this->meta_box_settings['title'] ), array( $this, 'meta_box_content' ), $this->token, 'normal', 'low' );
+	public function meta_box_setup() {
+		add_meta_box( 'woosidebars-conditions', esc_html( $this->meta_box_settings['title'] ), array(
+			$this,
+			'meta_box_content'
+		), $this->token, 'normal', 'low' );
 	} // End meta_box_setup()
 
 	/**
@@ -506,10 +530,12 @@ class Woo_Conditions {
 	 * @access public
 	 * @return void
 	 */
-	public function meta_box_content () {
+	public function meta_box_content() {
 		global $post_id;
 
-		if ( count( $this->conditions_reference ) <= 0 ) $this->setup_default_conditions_reference();
+		if ( count( $this->conditions_reference ) <= 0 ) {
+			$this->setup_default_conditions_reference();
+		}
 
 		$selected_conditions = get_post_meta( $post_id, '_condition', false );
 
@@ -519,7 +545,7 @@ class Woo_Conditions {
 
 		$html = '';
 
-		$html .= '<input type="hidden" name="woo_' . $this->token . '_conditions_noonce" id="woo_' . $this->token . '_noonce" value="' . wp_create_nonce( plugin_basename(__FILE__) ) . '" />';
+		$html .= '<input type="hidden" name="woo_' . $this->token . '_conditions_noonce" id="woo_' . $this->token . '_noonce" value="' . wp_create_nonce( plugin_basename( __FILE__ ) ) . '" />';
 
 		if ( count( $this->conditions_reference ) > 0 ) {
 
@@ -528,50 +554,54 @@ class Woo_Conditions {
 
 			foreach ( $this->conditions_reference as $k => $v ) {
 				if ( substr( $k, 0, 9 ) == 'taxonomy-' ) {
-					$taxonomy_terms[$k] = $v;
-					unset( $this->conditions_reference[$k] );
+					$taxonomy_terms[ $k ] = $v;
+					unset( $this->conditions_reference[ $k ] );
 				}
 			}
 
 			$html .= '<div id="taxonomy-category" class="categorydiv tabs woo-conditions">' . "\n";
 
-				$html .= '<ul id="category-tabs" class="conditions-tabs alignleft">' . "\n";
+			$html .= '<ul id="category-tabs" class="conditions-tabs alignleft">' . "\n";
 
-				$count = 0;
+			$count = 0;
 
-				// Determine whether or not to show advanced items, based on user's preference (default: false).
-				$show_advanced = $this->show_advanced_items();
+			// Determine whether or not to show advanced items, based on user's preference (default: false).
+			$show_advanced = $this->show_advanced_items();
 
-				foreach ( $this->conditions_reference as $k => $v ) {
-					$count++;
-					$class = '';
-					if ( $count == 1 ) {
-						$class = 'tabs';
-					} else {
-						$class = 'hide-if-no-js';
-					}
-					if ( in_array( $k, array( 'pages' ) ) ) {
-						$class .= ' basic';
-					} else {
-							$class .= ' advanced';
-							if ( ! $show_advanced ) { $class .= ' hide'; }
-					}
-
-					if ( isset( $this->conditions_headings[$k] ) ) {
-						$html .= '<li class="' . esc_attr( $class ) . '"><a href="#tab-' . esc_attr( $k ) . '">' . esc_html( $this->conditions_headings[$k] ) . '</a></li>' . "\n";
-					}
-
-					if ( $k == 'taxonomies' ) {
-						$html .= '<li class="' . esc_attr( $class ) . '"><a href="#tab-taxonomy-terms">' . __( 'Taxonomy Terms', 'woosidebars' ) . '</a></li>' . "\n";
+			foreach ( $this->conditions_reference as $k => $v ) {
+				$count ++;
+				$class = '';
+				if ( $count == 1 ) {
+					$class = 'tabs';
+				} else {
+					$class = 'hide-if-no-js';
+				}
+				if ( in_array( $k, array( 'pages' ) ) ) {
+					$class .= ' basic';
+				} else {
+					$class .= ' advanced';
+					if ( ! $show_advanced ) {
+						$class .= ' hide';
 					}
 				}
 
-				$class = 'hide-if-no-js advanced';
-				if ( ! $show_advanced ) { $class .= ' hide'; }
+				if ( isset( $this->conditions_headings[ $k ] ) ) {
+					$html .= '<li class="' . esc_attr( $class ) . '"><a href="#tab-' . esc_attr( $k ) . '">' . esc_html( $this->conditions_headings[ $k ] ) . '</a></li>' . "\n";
+				}
 
-				$html .= '</ul>' . "\n";
+				if ( $k == 'taxonomies' ) {
+					$html .= '<li class="' . esc_attr( $class ) . '"><a href="#tab-taxonomy-terms">' . __( 'Taxonomy Terms', 'woosidebars' ) . '</a></li>' . "\n";
+				}
+			}
 
-				$html .= '<ul class="conditions-tabs"><li class="advanced-settings alignright hide-if-no-js"><a href="#">' . __( 'Advanced', 'woosidebars' ) . '</a></li></ul>' . "\n";
+			$class = 'hide-if-no-js advanced';
+			if ( ! $show_advanced ) {
+				$class .= ' hide';
+			}
+
+			$html .= '</ul>' . "\n";
+
+			$html .= '<ul class="conditions-tabs"><li class="advanced-settings alignright hide-if-no-js"><a href="#">' . __( 'Advanced', 'woosidebars' ) . '</a></li></ul>' . "\n";
 
 			foreach ( $this->conditions_reference as $k => $v ) {
 				$count = 0;
@@ -579,23 +609,23 @@ class Woo_Conditions {
 				$tab = '';
 
 				$tab .= '<div id="tab-' . esc_attr( $k ) . '" class="condition-tab">' . "\n";
-				if ( isset( $this->conditions_headings[$k] ) ) {
-					$tab .= '<h4>' . esc_html( $this->conditions_headings[$k] ) . '</h4>' . "\n";
+				if ( isset( $this->conditions_headings[ $k ] ) ) {
+					$tab .= '<h4>' . esc_html( $this->conditions_headings[ $k ] ) . '</h4>' . "\n";
 				}
 				$tab .= '<ul class="alignleft conditions-column">' . "\n";
-					foreach ( $v as $i => $j ) {
-						$count++;
+				foreach ( $v as $i => $j ) {
+					$count ++;
 
-						$checked = '';
-						if ( in_array( $i, $selected_conditions ) ) {
-							$checked = ' checked="checked"';
-						}
-						$tab .= '<li><label class="selectit" title="' . esc_attr( $j['description'] ) . '"><input type="checkbox" name="conditions[]" value="' . $i . '" id="checkbox-' . $i . '"' . $checked . ' /> ' . esc_html( $j['label'] ) . '</label></li>' . "\n";
-
-						if ( $count % 10 == 0 && $count < ( count( $v ) ) ) {
-							$tab .= '</ul><ul class="alignleft conditions-column">';
-						}
+					$checked = '';
+					if ( in_array( $i, $selected_conditions ) ) {
+						$checked = ' checked="checked"';
 					}
+					$tab .= '<li><label class="selectit" title="' . esc_attr( $j['description'] ) . '"><input type="checkbox" name="conditions[]" value="' . $i . '" id="checkbox-' . $i . '"' . $checked . ' /> ' . esc_html( $j['label'] ) . '</label></li>' . "\n";
+
+					if ( $count % 10 == 0 && $count < ( count( $v ) ) ) {
+						$tab .= '</ul><ul class="alignleft conditions-column">';
+					}
+				}
 
 				$tab .= '</ul>' . "\n";
 				// Filter the contents of the current tab.
@@ -607,50 +637,52 @@ class Woo_Conditions {
 
 			// Taxonomy Terms Tab
 			$html .= '<div id="tab-taxonomy-terms" class="condition-tab inner-tabs">' . "\n";
-					$html .= '<ul class="conditions-tabs-inner hide-if-no-js">' . "\n";
+			$html .= '<ul class="conditions-tabs-inner hide-if-no-js">' . "\n";
 
-				foreach ( $taxonomy_terms as $k => $v ) {
-					if ( ! isset( $this->conditions_headings[$k] ) ) { unset( $taxonomy_terms[$k] ); }
+			foreach ( $taxonomy_terms as $k => $v ) {
+				if ( ! isset( $this->conditions_headings[ $k ] ) ) {
+					unset( $taxonomy_terms[ $k ] );
+				}
+			}
+
+			$count = 0;
+			foreach ( $taxonomy_terms as $k => $v ) {
+				$count ++;
+				$class = '';
+				if ( $count == 1 ) {
+					$class = 'tabs';
+				} else {
+					$class = 'hide-if-no-js';
 				}
 
-				$count = 0;
-				foreach ( $taxonomy_terms as $k => $v ) {
-					$count++;
-					$class = '';
-					if ( $count == 1 ) {
-						$class = 'tabs';
-					} else {
-						$class = 'hide-if-no-js';
-					}
-
-					$html .= '<li><a href="#tab-' . $k . '" title="' . __( 'Taxonomy Token', 'woosidebars' ) . ': ' . str_replace( 'taxonomy-', '', $k ) . '">' . esc_html( $this->conditions_headings[$k] ) . '</a>';
-						if ( $count != count( $taxonomy_terms ) ) {
-							$html .= ' |';
-						}
-					$html .= '</li>' . "\n";
+				$html .= '<li><a href="#tab-' . $k . '" title="' . __( 'Taxonomy Token', 'woosidebars' ) . ': ' . str_replace( 'taxonomy-', '', $k ) . '">' . esc_html( $this->conditions_headings[ $k ] ) . '</a>';
+				if ( $count != count( $taxonomy_terms ) ) {
+					$html .= ' |';
 				}
+				$html .= '</li>' . "\n";
+			}
 
-				$html .= '</ul>' . "\n";
+			$html .= '</ul>' . "\n";
 
 			foreach ( $taxonomy_terms as $k => $v ) {
 				$count = 0;
 
 				$html .= '<div id="tab-' . $k . '" class="condition-tab">' . "\n";
-				$html .= '<h4>' . esc_html( $this->conditions_headings[$k] ) . '</h4>' . "\n";
+				$html .= '<h4>' . esc_html( $this->conditions_headings[ $k ] ) . '</h4>' . "\n";
 				$html .= '<ul class="alignleft conditions-column">' . "\n";
-					foreach ( $v as $i => $j ) {
-						$count++;
+				foreach ( $v as $i => $j ) {
+					$count ++;
 
-						$checked = '';
-						if ( in_array( $i, $selected_conditions ) ) {
-							$checked = ' checked="checked"';
-						}
-						$html .= '<li><label class="selectit" title="' . esc_attr( $j['description'] ) . '"><input type="checkbox" name="conditions[]" value="' . $i . '" id="checkbox-' . esc_attr( $i ) . '"' . $checked . ' /> ' . esc_html( $j['label'] ) . '</label></li>' . "\n";
-
-						if ( $count % 10 == 0 && $count < ( count( $v ) ) ) {
-							$html .= '</ul><ul class="alignleft conditions-column">';
-						}
+					$checked = '';
+					if ( in_array( $i, $selected_conditions ) ) {
+						$checked = ' checked="checked"';
 					}
+					$html .= '<li><label class="selectit" title="' . esc_attr( $j['description'] ) . '"><input type="checkbox" name="conditions[]" value="' . $i . '" id="checkbox-' . esc_attr( $i ) . '"' . $checked . ' /> ' . esc_html( $j['label'] ) . '</label></li>' . "\n";
+
+					if ( $count % 10 == 0 && $count < ( count( $v ) ) ) {
+						$html .= '</ul><ul class="alignleft conditions-column">';
+					}
+				}
 
 				$html .= '</ul>' . "\n";
 				$html .= '<div class="clear"></div>';
@@ -671,14 +703,16 @@ class Woo_Conditions {
 	 * meta_box_save function.
 	 *
 	 * @access public
+	 *
 	 * @param mixed $post_id
+	 *
 	 * @return void
 	 */
-	public function meta_box_save ( $post_id ) {
+	public function meta_box_save( $post_id ) {
 		global $post, $messages;
 
 		// Verify
-		if ( ! isset( $_POST['woo_' . $this->token . '_conditions_noonce'] ) || ( get_post_type() != $this->token ) || ! wp_verify_nonce( $_POST['woo_' . $this->token . '_conditions_noonce'], plugin_basename(__FILE__) ) ) {
+		if ( ! isset( $_POST[ 'woo_' . $this->token . '_conditions_noonce' ] ) || ( get_post_type() != $this->token ) || ! wp_verify_nonce( $_POST[ 'woo_' . $this->token . '_conditions_noonce' ], plugin_basename( __FILE__ ) ) ) {
 			return $post_id;
 		}
 
@@ -707,12 +741,14 @@ class Woo_Conditions {
 	 * @access private
 	 * @return boolean
 	 */
-	private function show_advanced_items () {
+	private function show_advanced_items() {
 		$response = false;
 
 		$setting = get_user_setting( 'woosidebarsshowadvanced', '0' );
 
-		if ( $setting == '1' ) { $response = true; }
+		if ( $setting == '1' ) {
+			$response = true;
+		}
 
 		return $response;
 	} // End show_advanced_items()
@@ -723,7 +759,7 @@ class Woo_Conditions {
 	 * @access public
 	 * @return void
 	 */
-	public function ajax_toggle_advanced_items () {
+	public function ajax_toggle_advanced_items() {
 		//Add nonce security to the request
 		if ( ( ! isset( $_POST['woosidebars_advanced_noonce'] ) || ! isset( $_POST['new_status'] ) ) || ! wp_verify_nonce( $_POST['woosidebars_advanced_noonce'], 'woosidebars_advanced_noonce' ) ) {
 			die();
@@ -741,12 +777,17 @@ class Woo_Conditions {
 	 * @access public
 	 * @return void
 	 */
-	public function enqueue_scripts () {
+	public function enqueue_scripts() {
 		global $pagenow;
-		if ( get_post_type() != $this->token ) { return; }
+		if ( get_post_type() != $this->token ) {
+			return;
+		}
 
 		if ( in_array( $pagenow, array( 'post.php', 'post-new.php' ) ) ) {
-			wp_register_script( $this->token . '-admin', $this->assets_url . '/js/admin.js', array( 'jquery', 'jquery-ui-tabs' ), '1.2.1', true );
+			wp_register_script( $this->token . '-admin', $this->assets_url . '/js/admin.js', array(
+				'jquery',
+				'jquery-ui-tabs'
+			), '1.2.1', true );
 
 			wp_enqueue_script( $this->token . '-admin' );
 
