@@ -701,7 +701,7 @@ class Woo_Conditions {
 	 */
 	public function meta_box_save( $post_id ) {
 		// Verify
-		if ( get_post_type() !== $this->token || ! wp_verify_nonce( filter_input( INPUT_POST, "woo_{$this->token}_conditions-nonce" ), plugin_basename( __FILE__ ) ) ) {
+		if ( get_post_type() !== $this->token || ! wp_verify_nonce( filter_input( INPUT_POST, "woo_{$this->token}_conditions_nonce" ), plugin_basename( __FILE__ ) ) ) {
 			return;
 		}
 
