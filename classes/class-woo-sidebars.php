@@ -70,7 +70,8 @@ class Woo_Sidebars {
 	 * __construct function.
 	 *
 	 * @access public
-	 * @return void
+	 *
+	 * @param string $file
 	 */
 	public function __construct( $file ) {
 		$this->version     = '';
@@ -110,7 +111,7 @@ class Woo_Sidebars {
 
 			add_action( 'admin_print_styles', array( $this, 'enqueue_styles' ), 12 );
 			add_action( 'admin_head', array( $this, 'add_contextual_help' ) );
-			if ( $pagenow == 'edit.php' && isset( $_GET['post_type'] ) && esc_attr( $_GET['post_type'] ) == $this->token ) {
+			if ( $pagenow === 'edit.php' && esc_attr( filter_input( INPUT_GET, 'post_type' ) ) === $this->token ) {
 				add_filter( 'manage_edit-' . $this->token . '_columns', array(
 					$this,
 					'register_custom_column_headings'
@@ -139,7 +140,7 @@ class Woo_Sidebars {
 	public function register_post_type_columns() {
 		$post_type = get_post_type();
 
-		if ( $post_type != '' && post_type_supports( $post_type, 'woosidebars' ) ) {
+		if ( $post_type !== '' && post_type_supports( $post_type, 'woosidebars' ) ) {
 			add_filter( 'manage_edit-' . $post_type . '_columns', array( $this, 'add_post_column_headings' ), 10, 1 );
 			add_action( 'manage_posts_custom_column', array( $this, 'add_post_column_data' ), 10, 2 );
 			add_action( 'manage_pages_custom_column', array( $this, 'add_post_column_data' ), 10, 2 );
@@ -165,7 +166,7 @@ class Woo_Sidebars {
 		$rewrite  = array( 'slug' => 'sidebars' );
 		$supports = array( 'title', 'excerpt' );
 
-		if ( $rewrite == '' ) {
+		if ( $rewrite === '' ) {
 			$rewrite = $this->token;
 		}
 
@@ -215,8 +216,6 @@ class Woo_Sidebars {
 	 * @return void
 	 */
 	public function register_custom_columns( $column_name, $id ) {
-		global $wpdb, $post;
-
 		$meta     = get_post_custom( $id );
 		$sidebars = $this->get_registered_sidebars();
 
@@ -227,7 +226,7 @@ class Woo_Sidebars {
 			case 'sidebar_to_replace':
 				$value = '';
 
-				if ( isset( $meta['_sidebar_to_replace'] ) && ( $meta['_sidebar_to_replace'][0] != '' ) ) {
+				if ( isset( $meta['_sidebar_to_replace'] ) && ( $meta['_sidebar_to_replace'][0] !== '' ) ) {
 					$value = $meta['_sidebar_to_replace'][0];
 
 					if ( isset( $sidebars[ $value ] ) ) {
@@ -243,7 +242,7 @@ class Woo_Sidebars {
 			case 'condition':
 				$value = '';
 
-				if ( isset( $meta['_condition'] ) && ( $meta['_condition'][0] != '' ) ) {
+				if ( isset( $meta['_condition'] ) && ( $meta['_condition'][0] !== '' ) ) {
 					foreach ( $meta['_condition'] as $k => $v ) {
 						$value .= $this->multidimensional_search( $v, $this->conditions->conditions_reference ) . '<br />' . "\n";
 					}
@@ -265,7 +264,7 @@ class Woo_Sidebars {
 	 *
 	 * @param array $defaults
 	 *
-	 * @return void
+	 * @return array
 	 */
 	public function register_custom_column_headings( $defaults ) {
 		$this->conditions->setup_default_conditions_reference();
@@ -288,7 +287,7 @@ class Woo_Sidebars {
 		}
 		$defaults = array_merge( $defaults, $new_columns );
 
-		if ( $last_item != '' ) {
+		if ( $last_item !== '' ) {
 			foreach ( $last_item as $k => $v ) {
 				$defaults[ $k ] = $v;
 				break;
@@ -336,7 +335,7 @@ class Woo_Sidebars {
 
 		$html = '';
 
-		$html .= '<input type="hidden" name="woo_' . $this->token . '_noonce" id="woo_' . $this->token . '_noonce" value="' . wp_create_nonce( plugin_basename( __FILE__ ) ) . '" />';
+		$html .= '<input type="hidden" name="woo_' . $this->token . '_nonce" id="woo_' . $this->token . '_nonce" value="' . wp_create_nonce( plugin_basename( __FILE__ ) ) . '" />';
 
 		if ( count( $sidebars ) > 0 ) {
 			$html .= '<select name="sidebar_to_replace" class="widefat">' . "\n";
@@ -362,20 +361,18 @@ class Woo_Sidebars {
 	 * @return void
 	 */
 	public function meta_box_save( $post_id ) {
-		global $post, $messages;
-
 		// Verify
-		if ( ( get_post_type() != $this->token ) || ! wp_verify_nonce( $_POST[ 'woo_' . $this->token . '_noonce' ], plugin_basename( __FILE__ ) ) ) {
-			return $post_id;
+		if ( get_post_type() !== $this->token || ! wp_verify_nonce( filter_input( INPUT_POST, "woo_{$this->token}_nonce" ), plugin_basename( __FILE__ ) ) ) {
+			return;
 		}
 
-		if ( 'page' == $_POST['post_type'] ) {
+		if ( 'page' === filter_input( INPUT_POST, 'post_type' ) ) {
 			if ( ! current_user_can( 'edit_page', $post_id ) ) {
-				return $post_id;
+				return;
 			}
 		} else {
 			if ( ! current_user_can( 'edit_post', $post_id ) ) {
-				return $post_id;
+				return;
 			}
 		}
 
@@ -383,13 +380,13 @@ class Woo_Sidebars {
 
 		foreach ( $fields as $f ) {
 
-			${$f} = strip_tags( trim( $_POST[ $f ] ) );
+			${$f} = strip_tags( trim( filter_input( INPUT_POST, $f ) ) );
 
-			if ( get_post_meta( $post_id, '_' . $f ) == '' ) {
+			if ( get_post_meta( $post_id, '_' . $f ) === '' ) {
 				add_post_meta( $post_id, '_' . $f, ${$f}, true );
-			} elseif ( ${$f} != get_post_meta( $post_id, '_' . $f, true ) ) {
+			} elseif ( ${$f} !== get_post_meta( $post_id, '_' . $f, true ) ) {
 				update_post_meta( $post_id, '_' . $f, ${$f} );
-			} elseif ( ${$f} == '' ) {
+			} elseif ( ${$f} === '' ) {
 				delete_post_meta( $post_id, '_' . $f, get_post_meta( $post_id, '_' . $f, true ) );
 			}
 		}
@@ -416,10 +413,10 @@ class Woo_Sidebars {
 	 *
 	 * @param string $title
 	 *
-	 * @return void
+	 * @return string
 	 */
 	public function enter_title_here( $title ) {
-		if ( get_post_type() == $this->token ) {
+		if ( get_post_type() === $this->token ) {
 			$title = __( 'Enter widget area name here', 'woosidebars' );
 		}
 
@@ -433,10 +430,10 @@ class Woo_Sidebars {
 	 *
 	 * @param array $messages
 	 *
-	 * @return void
+	 * @return array
 	 */
 	public function update_messages( $messages ) {
-		if ( get_post_type() != $this->token ) {
+		if ( get_post_type() !== $this->token ) {
 			return $messages;
 		}
 
@@ -449,7 +446,7 @@ class Woo_Sidebars {
 	 * get_registered_sidebars function.
 	 *
 	 * @access public
-	 * @return void
+	 * @return array
 	 */
 	public function get_registered_sidebars() {
 		global $wp_registered_sidebars;
@@ -522,7 +519,7 @@ class Woo_Sidebars {
 	 *
 	 * @param array $sidebars_widgets
 	 *
-	 * @return void
+	 * @return array
 	 */
 	public function replace_sidebars( $sidebars_widgets ) {
 		if ( is_admin() ) {
@@ -539,8 +536,6 @@ class Woo_Sidebars {
 		global $woo_custom_sidebar_data;
 
 		if ( ! isset( $woo_custom_sidebar_data ) ) {
-
-			$conditions_str = join( ', ', $conditions );
 
 			$args = array(
 				'post_type'        => $this->token,
@@ -598,7 +593,7 @@ class Woo_Sidebars {
 			foreach ( $woo_custom_sidebar_data as $k => $v ) {
 				$sidebar_id = $v->post_name;
 				// $sidebar_id = $this->prefix . $v->ID;
-				if ( isset( $sidebars_widgets[ $sidebar_id ] ) && isset( $v->to_replace ) && $v->to_replace != '' ) {
+				if ( isset( $sidebars_widgets[ $sidebar_id ] ) && isset( $v->to_replace ) && $v->to_replace !== '' ) {
 					$widgets = $sidebars_widgets[ $sidebar_id ];
 					unset( $sidebars_widgets[ $sidebar_id ] );
 					$sidebars_widgets[ $v->to_replace ] = $widgets;
@@ -627,13 +622,13 @@ class Woo_Sidebars {
 
 		// Keep track of each sidebar we'd like to replace widgets for.
 		foreach ( $sidebars as $k => $v ) {
-			if ( isset( $v->to_replace ) && ( $v->to_replace != '' ) && ! isset( $sorted_sidebars[ $v->to_replace ] ) ) {
+			if ( isset( $v->to_replace ) && ( $v->to_replace !== '' ) && ! isset( $sorted_sidebars[ $v->to_replace ] ) ) {
 				$sorted_sidebars[ $v->to_replace ] = '';
 			}
 		}
 
 		foreach ( $sidebars as $k => $v ) {
-			if ( isset( $sorted_sidebars[ $v->to_replace ] ) && ( $sorted_sidebars[ $v->to_replace ] == '' ) ) {
+			if ( isset( $sorted_sidebars[ $v->to_replace ] ) && ( $sorted_sidebars[ $v->to_replace ] === '' ) ) {
 				$sorted_sidebars[ $v->to_replace ] = $v;
 			} else {
 				continue;
@@ -653,7 +648,7 @@ class Woo_Sidebars {
 		global $pagenow;
 
 		if ( in_array( $pagenow, array( 'edit.php', 'post.php', 'post-new.php' ) ) ) {
-			if ( get_post_type() != $this->token ) {
+			if ( get_post_type() !== $this->token ) {
 				return;
 			}
 			wp_enqueue_style( 'jquery-ui-tabs' );
@@ -669,7 +664,7 @@ class Woo_Sidebars {
 				wp_dequeue_style( 'metabox-tabs' );
 
 				$color = get_user_meta( get_current_user_id(), 'admin_color', true );
-				if ( '' == $color ) {
+				if ( '' === $color ) {
 					$color = 'fresh';
 				}
 
@@ -709,16 +704,15 @@ class Woo_Sidebars {
 	 * @return void
 	 */
 	public function add_post_column_data( $column_name, $id ) {
-		global $wpdb, $post;
+		global $post;
 		$meta = get_post_custom( $id );
 
 		switch ( $column_name ) {
 			case 'woosidebars_enable':
 				$image = 'success-off';
-				$value = '';
 				$class = 'custom-sidebars-disabled';
 
-				if ( isset( $meta['_enable_sidebar'] ) && ( $meta['_enable_sidebar'][0] != '' ) && ( $meta['_enable_sidebar'][0] == 'yes' ) ) {
+				if ( isset( $meta['_enable_sidebar'] ) && ( $meta['_enable_sidebar'][0] !== '' ) && ( $meta['_enable_sidebar'][0] === 'yes' ) ) {
 					$image = 'success';
 					$class = 'custom-sidebars-enabled';
 				}
@@ -751,23 +745,18 @@ class Woo_Sidebars {
 			wp_die( __( 'You have taken too long. Please go back and retry.', 'woosidebars' ) );
 		}
 
-		$post_id = isset( $_GET['post_id'] ) && (int) $_GET['post_id'] ? (int) $_GET['post_id'] : '';
+		$pid = absint( filter_input( INPUT_GET, 'post_id' ) );
 
-		if ( ! $post_id ) {
+		if ( ! $pid || ! get_post( $pid ) ) {
 			die;
 		}
 
-		$post = get_post( $post_id );
-		if ( ! $post ) {
-			die;
-		}
+		$meta = get_post_meta( $pid, '_enable_sidebar', true );
 
-		$meta = get_post_meta( $post->ID, '_enable_sidebar', true );
-
-		if ( $meta == 'yes' ) {
-			update_post_meta( $post->ID, '_enable_sidebar', 'no' );
+		if ( $meta === 'yes' ) {
+			update_post_meta( $pid, '_enable_sidebar', 'no' );
 		} else {
-			update_post_meta( $post->ID, '_enable_sidebar', 'yes' );
+			update_post_meta( $pid, '_enable_sidebar', 'yes' );
 		}
 
 		$sendback = remove_query_arg( array( 'trashed', 'untrashed', 'deleted', 'ids' ), wp_get_referer() );
@@ -790,7 +779,6 @@ class Woo_Sidebars {
 		}
 
 		foreach ( $haystack as $key => $value ) {
-			$exists = 0;
 			foreach ( (array) $needle as $nkey => $nvalue ) {
 				if ( ! empty( $value[ $nvalue ] ) && is_array( $value[ $nvalue ] ) ) {
 					return $value[ $nvalue ]['label'];
@@ -810,7 +798,7 @@ class Woo_Sidebars {
 	 * @return void
 	 */
 	public function add_contextual_help() {
-		if ( get_current_screen()->id != 'edit-sidebar' ) {
+		if ( get_current_screen()->id !== 'edit-sidebar' ) {
 			return;
 		}
 
@@ -872,7 +860,7 @@ class Woo_Sidebars {
 	 * @return void
 	 */
 	public function register_plugin_version() {
-		if ( $this->version != '' ) {
+		if ( $this->version !== '' ) {
 			update_option( 'woosidebars' . '-version', $this->version );
 		}
 	} // End register_plugin_version()

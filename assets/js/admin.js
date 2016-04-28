@@ -15,7 +15,7 @@ jQuery( document ).ready( function () {
 			ajaxurl,
 			{
 				action : 'woosidebars-toggle-advanced-items',
-				woosidebars_advanced_noonce : woosidebars_localized_data.woosidebars_advanced_noonce,
+				woosidebars_advanced_nonce : woosidebars_localized_data.woosidebars_advanced_nonce,
 				new_status: new_status
 			},
 			function( response ) {}

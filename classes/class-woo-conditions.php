@@ -53,13 +53,12 @@ class Woo_Conditions {
 	 * __construct function.
 	 *
 	 * @access public
-	 * @return void
 	 */
 	public function __construct() {
 		$this->meta_box_settings['title'] = __( 'Conditions', 'woosidebars' );
 		$this->upper_limit                = intval( apply_filters( 'woosidebars_upper_limit', 200 ) );
 
-		if ( is_admin() && get_post_type() == $this->token || ! get_post_type() ) {
+		if ( is_admin() && get_post_type() === $this->token || ! get_post_type() ) {
 			add_action( 'admin_menu', array( $this, 'meta_box_setup' ), 20 );
 			add_action( 'save_post', array( $this, 'meta_box_save' ) );
 		}
@@ -131,7 +130,7 @@ class Woo_Conditions {
 			foreach ( $pages as $k => $v ) {
 				$token = 'post-' . $v->ID;
 				$label = esc_html( $v->post_title );
-				if ( 'publish' != $v->post_status ) {
+				if ( 'publish' !== $v->post_status ) {
 					$label .= ' (' . $post_statuses[ $v->post_status ] . ')';
 				}
 
@@ -177,7 +176,7 @@ class Woo_Conditions {
 		$built_in_post_types = get_post_types( $args, 'object' );
 
 		foreach ( $built_in_post_types as $k => $v ) {
-			if ( $k == 'post' ) {
+			if ( $k === 'post' ) {
 				$post_types[ $k ] = $v;
 				break;
 			}
@@ -193,11 +192,15 @@ class Woo_Conditions {
 			$query_args = array(
 				'numberposts'      => intval( $this->upper_limit ),
 				'post_type'        => $k,
-				'meta_key'         => '_enable_sidebar',
-				'meta_value'       => 'yes',
-				'meta_compare'     => '=',
 				'post_status'      => 'any',
-				'suppress_filters' => 'false'
+				'suppress_filters' => 'false',
+				'meta_query'       => array(
+					array(
+						'key'     => '_enable_sidebar',
+						'value'   => 'yes',
+						'compare' => '=',
+					)
+				),
 			);
 
 			$posts = get_posts( $query_args );
@@ -205,7 +208,7 @@ class Woo_Conditions {
 			if ( count( $posts ) > 0 ) {
 				foreach ( $posts as $i => $j ) {
 					$label = $j->post_title;
-					if ( 'publish' != $j->post_status ) {
+					if ( 'publish' !== $j->post_status ) {
 						$label .= ' <strong>(' . $post_statuses[ $j->post_status ] . ')</strong>';
 					}
 					$conditions[ $k ][ 'post' . '-' . $j->ID ] = array(
@@ -278,7 +281,7 @@ class Woo_Conditions {
 			foreach ( $taxonomies as $k => $v ) {
 				$taxonomy = $v;
 
-				if ( $taxonomy->public == true ) {
+				if ( $taxonomy->public === true ) {
 					$conditions['taxonomies'][ 'archive-' . $k ] = array(
 						'label'       => esc_html( $taxonomy->labels->name ) . ' (' . esc_html( $k ) . ')',
 						'description' => sprintf( __( 'The default "%s" archives', 'woosidebars' ), strtolower( $taxonomy->labels->name ) )
@@ -294,13 +297,13 @@ class Woo_Conditions {
 								'label'       => esc_html( $j->name ),
 								'description' => sprintf( __( 'The %s %s archive', 'woosidebars' ), esc_html( $j->name ), strtolower( $taxonomy->labels->name ) )
 							);
-							if ( $k == 'category' ) {
+							if ( $k === 'category' ) {
 								$conditions[ 'taxonomy-' . $k ][ 'in-term-' . $j->term_id ] = array(
 									'label'       => sprintf( __( 'All posts in "%s"', 'woosidebars' ), esc_html( $j->name ) ),
 									'description' => sprintf( __( 'All posts in the %s %s archive', 'woosidebars' ), esc_html( $j->name ), strtolower( $taxonomy->labels->name ) )
 								);
 							}
-							if ( $k == 'post_tag' ) {
+							if ( $k === 'post_tag' ) {
 								$conditions[ 'taxonomy-' . $k ][ 'has-term-' . $j->term_id ] = array(
 									'label'       => sprintf( __( 'All posts tagged "%s"', 'woosidebars' ), esc_html( $j->name ) ),
 									'description' => sprintf( __( 'All posts tagged %s', 'woosidebars' ), esc_html( $j->name ) )
@@ -505,7 +508,7 @@ class Woo_Conditions {
 			global $post;
 			$template = get_post_meta( $post->ID, '_wp_page_template', true );
 
-			if ( $template != '' && $template != 'default' ) {
+			if ( $template !== '' && $template !== 'default' ) {
 				$this->conditions[] = str_replace( '.php', '', 'page-template-' . $template );
 			}
 		}
@@ -539,13 +542,13 @@ class Woo_Conditions {
 
 		$selected_conditions = get_post_meta( $post_id, '_condition', false );
 
-		if ( $selected_conditions == '' ) {
+		if ( $selected_conditions === '' ) {
 			$selected_conditions = array();
 		}
 
 		$html = '';
 
-		$html .= '<input type="hidden" name="woo_' . $this->token . '_conditions_noonce" id="woo_' . $this->token . '_noonce" value="' . wp_create_nonce( plugin_basename( __FILE__ ) ) . '" />';
+		$html .= '<input type="hidden" name="woo_' . $this->token . '_conditions_nonce" id="woo_' . $this->token . '_nonce" value="' . wp_create_nonce( plugin_basename( __FILE__ ) ) . '" />';
 
 		if ( count( $this->conditions_reference ) > 0 ) {
 
@@ -553,7 +556,7 @@ class Woo_Conditions {
 			$taxonomy_terms = array();
 
 			foreach ( $this->conditions_reference as $k => $v ) {
-				if ( substr( $k, 0, 9 ) == 'taxonomy-' ) {
+				if ( substr( $k, 0, 9 ) === 'taxonomy-' ) {
 					$taxonomy_terms[ $k ] = $v;
 					unset( $this->conditions_reference[ $k ] );
 				}
@@ -570,8 +573,7 @@ class Woo_Conditions {
 
 			foreach ( $this->conditions_reference as $k => $v ) {
 				$count ++;
-				$class = '';
-				if ( $count == 1 ) {
+				if ( $count === 1 ) {
 					$class = 'tabs';
 				} else {
 					$class = 'hide-if-no-js';
@@ -589,14 +591,9 @@ class Woo_Conditions {
 					$html .= '<li class="' . esc_attr( $class ) . '"><a href="#tab-' . esc_attr( $k ) . '">' . esc_html( $this->conditions_headings[ $k ] ) . '</a></li>' . "\n";
 				}
 
-				if ( $k == 'taxonomies' ) {
+				if ( $k === 'taxonomies' ) {
 					$html .= '<li class="' . esc_attr( $class ) . '"><a href="#tab-taxonomy-terms">' . __( 'Taxonomy Terms', 'woosidebars' ) . '</a></li>' . "\n";
 				}
-			}
-
-			$class = 'hide-if-no-js advanced';
-			if ( ! $show_advanced ) {
-				$class .= ' hide';
 			}
 
 			$html .= '</ul>' . "\n";
@@ -622,7 +619,7 @@ class Woo_Conditions {
 					}
 					$tab .= '<li><label class="selectit" title="' . esc_attr( $j['description'] ) . '"><input type="checkbox" name="conditions[]" value="' . $i . '" id="checkbox-' . $i . '"' . $checked . ' /> ' . esc_html( $j['label'] ) . '</label></li>' . "\n";
 
-					if ( $count % 10 == 0 && $count < ( count( $v ) ) ) {
+					if ( $count % 10 === 0 && $count < ( count( $v ) ) ) {
 						$tab .= '</ul><ul class="alignleft conditions-column">';
 					}
 				}
@@ -648,15 +645,9 @@ class Woo_Conditions {
 			$count = 0;
 			foreach ( $taxonomy_terms as $k => $v ) {
 				$count ++;
-				$class = '';
-				if ( $count == 1 ) {
-					$class = 'tabs';
-				} else {
-					$class = 'hide-if-no-js';
-				}
 
 				$html .= '<li><a href="#tab-' . $k . '" title="' . __( 'Taxonomy Token', 'woosidebars' ) . ': ' . str_replace( 'taxonomy-', '', $k ) . '">' . esc_html( $this->conditions_headings[ $k ] ) . '</a>';
-				if ( $count != count( $taxonomy_terms ) ) {
+				if ( $count !== count( $taxonomy_terms ) ) {
 					$html .= ' |';
 				}
 				$html .= '</li>' . "\n";
@@ -679,7 +670,7 @@ class Woo_Conditions {
 					}
 					$html .= '<li><label class="selectit" title="' . esc_attr( $j['description'] ) . '"><input type="checkbox" name="conditions[]" value="' . $i . '" id="checkbox-' . esc_attr( $i ) . '"' . $checked . ' /> ' . esc_html( $j['label'] ) . '</label></li>' . "\n";
 
-					if ( $count % 10 == 0 && $count < ( count( $v ) ) ) {
+					if ( $count % 10 === 0 && $count < ( count( $v ) ) ) {
 						$html .= '</ul><ul class="alignleft conditions-column">';
 					}
 				}
@@ -704,32 +695,31 @@ class Woo_Conditions {
 	 *
 	 * @access public
 	 *
-	 * @param mixed $post_id
+	 * @param int $post_id
 	 *
 	 * @return void
 	 */
 	public function meta_box_save( $post_id ) {
-		global $post, $messages;
-
 		// Verify
-		if ( ! isset( $_POST[ 'woo_' . $this->token . '_conditions_noonce' ] ) || ( get_post_type() != $this->token ) || ! wp_verify_nonce( $_POST[ 'woo_' . $this->token . '_conditions_noonce' ], plugin_basename( __FILE__ ) ) ) {
-			return $post_id;
+		if ( get_post_type() !== $this->token || ! wp_verify_nonce( filter_input( INPUT_POST, "woo_{$this->token}_conditions-nonce" ), plugin_basename( __FILE__ ) ) ) {
+			return;
 		}
 
-		if ( 'page' == $_POST['post_type'] ) {
+		if ( 'page' === filter_input( INPUT_POST, 'post_type' ) ) {
 			if ( ! current_user_can( 'edit_page', $post_id ) ) {
-				return $post_id;
+				return;
 			}
 		} else {
 			if ( ! current_user_can( 'edit_post', $post_id ) ) {
-				return $post_id;
+				return;
 			}
 		}
 
-		if ( isset( $_POST['conditions'] ) && ( 0 < count( $_POST['conditions'] ) ) ) {
+		$conditions = filter_input( INPUT_POST, 'conditions', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY );
+		if ( 0 < count( $conditions ) ) {
 			delete_post_meta( $post_id, '_condition' );
 
-			foreach ( $_POST['conditions'] as $k => $v ) {
+			foreach ( $conditions as $k => $v ) {
 				add_post_meta( $post_id, '_condition', $v, false );
 			}
 		}
@@ -746,7 +736,7 @@ class Woo_Conditions {
 
 		$setting = get_user_setting( 'woosidebarsshowadvanced', '0' );
 
-		if ( $setting == '1' ) {
+		if ( $setting === '1' ) {
 			$response = true;
 		}
 
@@ -761,11 +751,11 @@ class Woo_Conditions {
 	 */
 	public function ajax_toggle_advanced_items() {
 		//Add nonce security to the request
-		if ( ( ! isset( $_POST['woosidebars_advanced_noonce'] ) || ! isset( $_POST['new_status'] ) ) || ! wp_verify_nonce( $_POST['woosidebars_advanced_noonce'], 'woosidebars_advanced_noonce' ) ) {
+		if ( ! filter_input( INPUT_POST, 'new_status' ) || ! wp_verify_nonce( filter_input( INPUT_POST, 'woosidebars_advanced_nonce' ), 'woosidebars_advanced_nonce' ) ) {
 			die();
 		}
 
-		$response = set_user_setting( 'woosidebarsshowadvanced', $_POST['new_status'] );
+		$response = set_user_setting( 'woosidebarsshowadvanced', filter_input( INPUT_POST, 'new_status', FILTER_SANITIZE_STRING ) );
 
 		echo $response;
 		die(); // WordPress may print out a spurious zero without this can be particularly bad if using JSON
@@ -779,7 +769,7 @@ class Woo_Conditions {
 	 */
 	public function enqueue_scripts() {
 		global $pagenow;
-		if ( get_post_type() != $this->token ) {
+		if ( get_post_type() !== $this->token ) {
 			return;
 		}
 
@@ -795,7 +785,7 @@ class Woo_Conditions {
 
 			$translation_strings = array();
 
-			$ajax_vars = array( 'woosidebars_advanced_noonce' => wp_create_nonce( 'woosidebars_advanced_noonce' ) );
+			$ajax_vars = array( 'woosidebars_advanced_nonce' => wp_create_nonce( 'woosidebars_advanced_nonce' ) );
 
 			$data = array_merge( $translation_strings, $ajax_vars );
 
