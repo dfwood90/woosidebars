@@ -542,7 +542,7 @@ class Woo_Conditions {
 
 		$selected_conditions = get_post_meta( $post_id, '_condition', false );
 
-		if ( $selected_conditions === '' ) {
+		if ( ! is_array( $selected_conditions ) ) {
 			$selected_conditions = array();
 		}
 
@@ -614,7 +614,7 @@ class Woo_Conditions {
 					$count ++;
 
 					$checked = '';
-					if ( in_array( $i, $selected_conditions ) ) {
+					if ( in_array( $i, (array) $selected_conditions ) ) {
 						$checked = ' checked="checked"';
 					}
 					$tab .= '<li><label class="selectit" title="' . esc_attr( $j['description'] ) . '"><input type="checkbox" name="conditions[]" value="' . $i . '" id="checkbox-' . $i . '"' . $checked . ' /> ' . esc_html( $j['label'] ) . '</label></li>' . "\n";
@@ -665,7 +665,7 @@ class Woo_Conditions {
 					$count ++;
 
 					$checked = '';
-					if ( in_array( $i, $selected_conditions ) ) {
+					if ( in_array( $i, (array) $selected_conditions ) ) {
 						$checked = ' checked="checked"';
 					}
 					$html .= '<li><label class="selectit" title="' . esc_attr( $j['description'] ) . '"><input type="checkbox" name="conditions[]" value="' . $i . '" id="checkbox-' . esc_attr( $i ) . '"' . $checked . ' /> ' . esc_html( $j['label'] ) . '</label></li>' . "\n";
